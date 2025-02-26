@@ -27,6 +27,7 @@ public class JprHttpHandler implements HttpHandler {
     private JeveryParamReplacer jeveryParamReplacerObject;
     private ToolType[] toolTypeSources = {};
     private boolean requestMustBeInScope = true;
+    private boolean parametersMustBeInScope = true;
     private Http httpObject;
 
 
@@ -63,6 +64,9 @@ public class JprHttpHandler implements HttpHandler {
             HttpRequest modifiedRequest = httpRequestToBeSent;
             List<ParsedHttpParameter> allParams = httpRequestToBeSent.parameters();
             for (ParsedHttpParameter param : allParams) {
+                if (!checkParameterInScopeState(param.name())){
+                    continue;
+                }
                 if (param.type() == HttpParameterType.URL){
                     modifiedRequest = modifiedRequest.withParameter(urlParameter(param.name(), p));
                 } else if (param.type() == HttpParameterType.BODY){
@@ -73,6 +77,9 @@ public class JprHttpHandler implements HttpHandler {
 
                         JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
                         for (String key : jsonObject.keySet()) {
+                            if (!checkParameterInScopeState(key)){
+                                continue;
+                            }
                             print_output(jsonObject.get(key).getAsString());
                             jsonObject.addProperty(key, p);
                         }
@@ -81,7 +88,6 @@ public class JprHttpHandler implements HttpHandler {
 
                     } catch (JsonSyntaxException e){
                         print_error("Invalid JSON detected: " + e.getMessage());
-                        continue;
                     }
 
                 } else {
@@ -107,8 +113,20 @@ public class JprHttpHandler implements HttpHandler {
         return null;
     }
 
+    private boolean checkParameterInScopeState(String paramName){
+        if (parametersMustBeInScope){
+            return this.jeveryParamReplacerObject.selectedParameters.contains(paramName);
+        } else {
+            return true;
+        }
+    }
+
     public void setRequestMustBeInScope(boolean state) {
         requestMustBeInScope = state;
+    }
+
+    public void setParametersMustBeInScope(boolean state) {
+        parametersMustBeInScope = state;
     }
 
     private static boolean isPost(HttpRequestToBeSent httpRequestToBeSent) {
