@@ -28,6 +28,9 @@ public class JprHttpHandler implements HttpHandler {
     private ToolType[] toolTypeSources = {};
     private boolean requestMustBeInScope = true;
     private boolean parametersMustBeInScope = true;
+    private boolean mustUrlParameterBeReplaced = false;
+    private boolean mustBodyParameterBeReplaced = false;
+    private boolean mustJsonParameterBeReplaced = false;
     private Http httpObject;
 
 
@@ -59,29 +62,33 @@ public class JprHttpHandler implements HttpHandler {
             return null;
         }
 
-
+        boolean isAnyChangeMade = false;
         for (String p: this.jeveryParamReplacerObject.payloads){
             HttpRequest modifiedRequest = httpRequestToBeSent;
             List<ParsedHttpParameter> allParams = httpRequestToBeSent.parameters();
+
             for (ParsedHttpParameter param : allParams) {
-                if (!checkParameterInScopeState(param.name())){
+                if (!checkParameterInScopeState(param.name(), param.type())){
                     continue;
                 }
                 if (param.type() == HttpParameterType.URL){
                     modifiedRequest = modifiedRequest.withParameter(urlParameter(param.name(), p));
+                    isAnyChangeMade = true;
                 } else if (param.type() == HttpParameterType.BODY){
                     modifiedRequest = modifiedRequest.withParameter(bodyParameter(param.name(), p));
+                    isAnyChangeMade = true;
                 } else if (param.type() == HttpParameterType.JSON){
                     String requestBody = modifiedRequest.body().toString();
                     try{
 
                         JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
                         for (String key : jsonObject.keySet()) {
-                            if (!checkParameterInScopeState(key)){
+                            if (!checkParameterInScopeState(key, param.type())){
                                 continue;
                             }
                             print_output(jsonObject.get(key).getAsString());
                             jsonObject.addProperty(key, p);
+                            isAnyChangeMade = true;
                         }
 
                         modifiedRequest = modifiedRequest.withBody(jsonObject.toString());
@@ -98,8 +105,10 @@ public class JprHttpHandler implements HttpHandler {
             if (modifiedRequest == null) {
                 continue;
             }
-
-            HttpRequestResponse httpRequestResponse = httpObject.sendRequest(modifiedRequest);
+            if (isAnyChangeMade){
+                HttpRequestResponse httpRequestResponse = httpObject.sendRequest(modifiedRequest);
+                isAnyChangeMade = false;
+            }
 
         }
 
@@ -113,7 +122,21 @@ public class JprHttpHandler implements HttpHandler {
         return null;
     }
 
-    private boolean checkParameterInScopeState(String paramName){
+    private boolean checkParameterInScopeState(String paramName, HttpParameterType paramType){
+        if (paramType.equals(HttpParameterType.BODY)){
+            if (!mustBodyParameterBeReplaced){
+                return false;
+            }
+        } else if (paramType.equals(HttpParameterType.URL)){
+            if (!mustUrlParameterBeReplaced){
+                return false;
+            }
+        } else if (paramType.equals(HttpParameterType.JSON)){
+            if (!mustJsonParameterBeReplaced){
+                return false;
+            }
+        }
+
         if (parametersMustBeInScope){
             return this.jeveryParamReplacerObject.selectedParameters.contains(paramName);
         } else {
@@ -123,6 +146,18 @@ public class JprHttpHandler implements HttpHandler {
 
     public void setRequestMustBeInScope(boolean state) {
         requestMustBeInScope = state;
+    }
+
+    public void setMustUrlParameterBeReplaced(boolean state) {
+        mustUrlParameterBeReplaced = state;
+    }
+
+    public void setMustBodyParameterBeReplaced(boolean state) {
+        mustBodyParameterBeReplaced = state;
+    }
+
+    public void setMustJsonParameterBeReplaced(boolean state) {
+        mustJsonParameterBeReplaced = state;
     }
 
     public void setParametersMustBeInScope(boolean state) {

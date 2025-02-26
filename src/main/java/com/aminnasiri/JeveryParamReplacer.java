@@ -20,6 +20,9 @@ public class JeveryParamReplacer implements BurpExtension
     private JTextArea selectedParametersTextArea;
     private JCheckBox replaceInRepeater;
     private JCheckBox replaceInProxy;
+    private JCheckBox urlParamsCheckBox;
+    private JCheckBox bodyParamsCheckBox;
+    private JCheckBox jsonParamsCheckBox;
     private JCheckBox mustRequestBeInScopeCheckBox;
     private JCheckBox mustParameterNameBeInSelectedParameterBoxCheckBox;
     public List<String> payloads;
@@ -73,6 +76,15 @@ public class JeveryParamReplacer implements BurpExtension
         replaceInProxy = new JCheckBox("Replace params in requests from proxy");
         replaceInProxy.addActionListener(e -> changeEnableProxyReplacerButton());
 
+        urlParamsCheckBox = new JCheckBox("URL Params");
+        urlParamsCheckBox.addActionListener(e -> changeParametersSourcesCheckBox());
+
+        bodyParamsCheckBox = new JCheckBox("Body Params");
+        bodyParamsCheckBox.addActionListener(e -> changeParametersSourcesCheckBox());
+
+        jsonParamsCheckBox = new JCheckBox("JSON Body Params");
+        jsonParamsCheckBox.addActionListener(e -> changeParametersSourcesCheckBox());
+
         mustRequestBeInScopeCheckBox = new JCheckBox("Must Request be in Scope ?");
         mustRequestBeInScopeCheckBox.setSelected(true);
         mustRequestBeInScopeCheckBox.addActionListener(e -> changeMustRequestBeInScopeCheckBox());
@@ -89,6 +101,9 @@ public class JeveryParamReplacer implements BurpExtension
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.add(replaceInRepeater);
         topPanel.add(replaceInProxy);
+        topPanel.add(urlParamsCheckBox);
+        topPanel.add(bodyParamsCheckBox);
+        topPanel.add(jsonParamsCheckBox);
         topPanel.add(mustRequestBeInScopeCheckBox);
         topPanel.add(mustParameterNameBeInSelectedParameterBoxCheckBox);
 
@@ -98,6 +113,12 @@ public class JeveryParamReplacer implements BurpExtension
         panel.add(saveButton, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    private void changeParametersSourcesCheckBox(){
+        this.jprHttpHandler.setMustUrlParameterBeReplaced(urlParamsCheckBox.isSelected());
+        this.jprHttpHandler.setMustBodyParameterBeReplaced(bodyParamsCheckBox.isSelected());
+        this.jprHttpHandler.setMustJsonParameterBeReplaced(jsonParamsCheckBox.isSelected());
     }
 
 
