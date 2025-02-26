@@ -18,6 +18,7 @@ public class JeveryParamReplacer implements BurpExtension
     private Logging logging;
     private JTextArea payloadTextArea;
     private JTextArea selectedParametersTextArea;
+    private JTextArea selectedHeadersTextArea;
     private JCheckBox replaceInRepeater;
     private JCheckBox replaceInProxy;
     private JCheckBox urlParamsCheckBox;
@@ -25,8 +26,11 @@ public class JeveryParamReplacer implements BurpExtension
     private JCheckBox jsonParamsCheckBox;
     private JCheckBox mustRequestBeInScopeCheckBox;
     private JCheckBox mustParameterNameBeInSelectedParameterBoxCheckBox;
+    private JCheckBox mustHeadersBeReplacedCheckBox;
+    private JCheckBox mustHeadersBeInInScopeHeadersCheckBox;
     public List<String> payloads;
     public List<String> selectedParameters;
+    public List<String> selectedHeaders;
     private JprHttpHandler jprHttpHandler;
 
     @Override
@@ -45,7 +49,8 @@ public class JeveryParamReplacer implements BurpExtension
 
         // Labels
         JLabel payloadLabel = new JLabel("Payloads:");
-        JLabel selectedParametersLabel = new JLabel("In Scope Parameters:");
+        JLabel selectedParametersLabel = new JLabel("In Scope Parameters [case-sensitive]:");
+        JLabel inScopeHeadersLabel = new JLabel("In Scope Headers [case-sensitive]:");
 
         // Payload Text Area
         payloadTextArea = new JTextArea(6, 20);
@@ -54,6 +59,10 @@ public class JeveryParamReplacer implements BurpExtension
         // Selected Header Text Area
         selectedParametersTextArea = new JTextArea(6, 20);
         JScrollPane selectedParametersScrollPane = new JScrollPane(selectedParametersTextArea);
+
+        // Selected Header Text Area
+        selectedHeadersTextArea = new JTextArea(6, 20);
+        JScrollPane selectedHeadersScrollPane = new JScrollPane(selectedHeadersTextArea);
 
         // Panels for text areas
         JPanel payloadPanel = new JPanel(new BorderLayout());
@@ -64,34 +73,46 @@ public class JeveryParamReplacer implements BurpExtension
         selectedParamsPanel.add(selectedParametersLabel, BorderLayout.NORTH);
         selectedParamsPanel.add(selectedParametersScrollPane, BorderLayout.CENTER);
 
+        JPanel selectedHeadersPanel = new JPanel(new BorderLayout());
+        selectedHeadersPanel.add(inScopeHeadersLabel, BorderLayout.NORTH);
+        selectedHeadersPanel.add(selectedHeadersScrollPane, BorderLayout.CENTER);
+
         // Make them sit side by side
         JPanel middlePanel = new JPanel(new GridLayout(1, 2, 10, 0)); // 1 row, 2 columns, 10px gap
         middlePanel.add(payloadPanel);
         middlePanel.add(selectedParamsPanel);
+        middlePanel.add(selectedHeadersPanel);
 
         // Checkboxes
-        replaceInRepeater = new JCheckBox("Replace params in requests from repeater");
-        replaceInRepeater.addActionListener(e -> changeEnableRepeaterReplacerButton());
+        replaceInRepeater = new JCheckBox("Replace Requests from Repeater");
+        replaceInRepeater.addActionListener(e -> changeCheckBoxState());
 
-        replaceInProxy = new JCheckBox("Replace params in requests from proxy");
-        replaceInProxy.addActionListener(e -> changeEnableProxyReplacerButton());
+        replaceInProxy = new JCheckBox("Replace Requests from Proxy");
+        replaceInProxy.addActionListener(e -> changeCheckBoxState());
 
         urlParamsCheckBox = new JCheckBox("URL Params");
-        urlParamsCheckBox.addActionListener(e -> changeParametersSourcesCheckBox());
+        urlParamsCheckBox.addActionListener(e -> changeCheckBoxState());
 
         bodyParamsCheckBox = new JCheckBox("Body Params");
-        bodyParamsCheckBox.addActionListener(e -> changeParametersSourcesCheckBox());
+        bodyParamsCheckBox.addActionListener(e -> changeCheckBoxState());
 
         jsonParamsCheckBox = new JCheckBox("JSON Body Params");
-        jsonParamsCheckBox.addActionListener(e -> changeParametersSourcesCheckBox());
+        jsonParamsCheckBox.addActionListener(e -> changeCheckBoxState());
 
         mustRequestBeInScopeCheckBox = new JCheckBox("Must Request be in Scope ?");
         mustRequestBeInScopeCheckBox.setSelected(true);
-        mustRequestBeInScopeCheckBox.addActionListener(e -> changeMustRequestBeInScopeCheckBox());
+        mustRequestBeInScopeCheckBox.addActionListener(e -> changeCheckBoxState());
 
-        mustParameterNameBeInSelectedParameterBoxCheckBox = new JCheckBox("Must Parameter Name Be in \"In Scope Parameter Box?\" [If you disable this, all parameters will be replaced!]");
+        mustParameterNameBeInSelectedParameterBoxCheckBox = new JCheckBox("Must Parameter Name Be in In Scope Parameters? [If you disable this, all parameters will be replaced!]");
         mustParameterNameBeInSelectedParameterBoxCheckBox.setSelected(true);
-        mustParameterNameBeInSelectedParameterBoxCheckBox.addActionListener(e -> changeMustParameterNameBeInSelectedParameterCheckBox());
+        mustParameterNameBeInSelectedParameterBoxCheckBox.addActionListener(e -> changeCheckBoxState());
+
+        mustHeadersBeReplacedCheckBox = new JCheckBox("Must Headers Be Replaced ?");
+        mustHeadersBeReplacedCheckBox.addActionListener(e -> changeCheckBoxState());
+
+        mustHeadersBeInInScopeHeadersCheckBox = new JCheckBox("Must Headers Be In Scope Headers? [If you disable this, all headers' value will be replaced!]");
+        mustHeadersBeInInScopeHeadersCheckBox.setSelected(true);
+        mustHeadersBeInInScopeHeadersCheckBox.addActionListener(e -> changeCheckBoxState());
 
         JButton saveButton = new JButton("Save Settings");
         saveButton.addActionListener(e -> saveSettings());
@@ -106,6 +127,8 @@ public class JeveryParamReplacer implements BurpExtension
         topPanel.add(jsonParamsCheckBox);
         topPanel.add(mustRequestBeInScopeCheckBox);
         topPanel.add(mustParameterNameBeInSelectedParameterBoxCheckBox);
+        topPanel.add(mustHeadersBeReplacedCheckBox);
+        topPanel.add(mustHeadersBeInInScopeHeadersCheckBox);
 
         // Add everything to the main panel
         panel.add(topPanel, BorderLayout.NORTH);
@@ -115,27 +138,21 @@ public class JeveryParamReplacer implements BurpExtension
         return panel;
     }
 
-    private void changeParametersSourcesCheckBox(){
+    private void changeCheckBoxState(){
         this.jprHttpHandler.setMustUrlParameterBeReplaced(urlParamsCheckBox.isSelected());
         this.jprHttpHandler.setMustBodyParameterBeReplaced(bodyParamsCheckBox.isSelected());
         this.jprHttpHandler.setMustJsonParameterBeReplaced(jsonParamsCheckBox.isSelected());
-    }
 
+        this.jprHttpHandler.setMustHeadersBeReplaced(mustHeadersBeReplacedCheckBox.isSelected());
+        this.jprHttpHandler.setMustHeadersBeInScope(mustHeadersBeInInScopeHeadersCheckBox.isSelected());
 
-    private void changeEnableProxyReplacerButton(){
         this.jprHttpHandler.setEnableProxyToolType(replaceInProxy.isSelected());
-    }
-
-    private void changeEnableRepeaterReplacerButton(){
         this.jprHttpHandler.setEnableRepeaterToolType(replaceInRepeater.isSelected());
-    }
 
-    private void changeMustRequestBeInScopeCheckBox(){
         this.jprHttpHandler.setRequestMustBeInScope(mustRequestBeInScopeCheckBox.isSelected());
-    }
 
-    private void changeMustParameterNameBeInSelectedParameterCheckBox(){
         this.jprHttpHandler.setParametersMustBeInScope(mustParameterNameBeInSelectedParameterBoxCheckBox.isSelected());
+
     }
 
     private void saveSettings() {
@@ -144,6 +161,9 @@ public class JeveryParamReplacer implements BurpExtension
 
         selectedParameters = Arrays.asList(selectedParametersTextArea.getText().split("\n"));
         print_output("In-Scope parameters are Saved:\n" + selectedParameters);
+
+        selectedHeaders = Arrays.asList(selectedHeadersTextArea.getText().split("\n"));
+        print_output("In-Scope headers are Saved:\n" + selectedHeaders);
 
         JOptionPane.showMessageDialog(null, "Settings saved successfully!");
     }

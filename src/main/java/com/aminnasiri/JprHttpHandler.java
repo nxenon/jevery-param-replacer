@@ -1,6 +1,7 @@
 package com.aminnasiri;
 
 import burp.api.montoya.http.handler.*;
+import burp.api.montoya.http.message.HttpHeader;
 import burp.api.montoya.http.message.params.ParsedHttpParameter;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.HttpRequestResponse;
@@ -13,6 +14,7 @@ import burp.api.montoya.core.ToolType;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import burp.api.montoya.http.Http;
 
@@ -31,6 +33,8 @@ public class JprHttpHandler implements HttpHandler {
     private boolean mustUrlParameterBeReplaced = false;
     private boolean mustBodyParameterBeReplaced = false;
     private boolean mustJsonParameterBeReplaced = false;
+    private boolean mustHeadersBeReplaced = false;
+    private boolean mustHeadersBeInScope = true;
     private Http httpObject;
 
 
@@ -66,6 +70,16 @@ public class JprHttpHandler implements HttpHandler {
         for (String p: this.jeveryParamReplacerObject.payloads){
             HttpRequest modifiedRequest = httpRequestToBeSent;
             List<ParsedHttpParameter> allParams = httpRequestToBeSent.parameters();
+
+            if (mustHeadersBeReplaced){
+                List<HttpHeader> allHeaders = httpRequestToBeSent.headers();
+                for (HttpHeader h: allHeaders){
+                    if (checkHeadersInScopeState(h.name())){
+                        modifiedRequest = modifiedRequest.withHeader(h.name(), p);
+                        isAnyChangeMade = true;
+                    }
+                }
+            }
 
             for (ParsedHttpParameter param : allParams) {
                 if (!checkParameterInScopeState(param.name(), param.type())){
@@ -144,12 +158,31 @@ public class JprHttpHandler implements HttpHandler {
         }
     }
 
+    private boolean checkHeadersInScopeState(String headerName){
+        if (Objects.equals(headerName.toLowerCase(), "content-length") || Objects.equals(headerName.toLowerCase(), "content-type")){
+            return false;
+        }
+        if (mustHeadersBeInScope){
+            return this.jeveryParamReplacerObject.selectedHeaders.contains(headerName);
+        } else {
+            return true;
+        }
+    }
+
     public void setRequestMustBeInScope(boolean state) {
         requestMustBeInScope = state;
     }
 
     public void setMustUrlParameterBeReplaced(boolean state) {
         mustUrlParameterBeReplaced = state;
+    }
+
+    public void setMustHeadersBeReplaced(boolean state) {
+        mustHeadersBeReplaced = state;
+    }
+
+    public void setMustHeadersBeInScope(boolean state) {
+        mustHeadersBeInScope = state;
     }
 
     public void setMustBodyParameterBeReplaced(boolean state) {
