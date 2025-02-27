@@ -41,6 +41,7 @@ public class JeveryParamReplacer implements BurpExtension
         montoyaApi.userInterface().registerSuiteTab("JEvery Param Replacer Payloads", createUiPayloadPanel());
         jprHttpHandler = new JprHttpHandler(this, montoyaApi.http());
         montoyaApi.http().registerHttpHandler(jprHttpHandler);
+        montoyaApi.userInterface().registerContextMenuItemsProvider(new JprMenuTab(this, montoyaApi.http(), jprHttpHandler));
 
     }
 

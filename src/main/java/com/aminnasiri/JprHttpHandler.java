@@ -66,6 +66,18 @@ public class JprHttpHandler implements HttpHandler {
             return null;
         }
 
+        doReplacementTask(httpRequestToBeSent);
+
+        return continueWith(httpRequestToBeSent, null);
+
+    }
+
+    @Override
+    public ResponseReceivedAction handleHttpResponseReceived(HttpResponseReceived httpResponseReceived) {
+        return null;
+    }
+
+    public void doReplacementTask(HttpRequest httpRequestToBeSent){
         boolean isAnyChangeMade = false;
         for (String p: this.jeveryParamReplacerObject.payloads){
             HttpRequest modifiedRequest = httpRequestToBeSent;
@@ -125,15 +137,6 @@ public class JprHttpHandler implements HttpHandler {
             }
 
         }
-
-
-        return continueWith(httpRequestToBeSent, null);
-
-    }
-
-    @Override
-    public ResponseReceivedAction handleHttpResponseReceived(HttpResponseReceived httpResponseReceived) {
-        return null;
     }
 
     private boolean checkParameterInScopeState(String paramName, HttpParameterType paramType){
