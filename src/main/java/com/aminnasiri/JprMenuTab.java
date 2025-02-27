@@ -23,7 +23,6 @@ public class JprMenuTab implements ContextMenuItemsProvider {
         this.jprHttpHandler = jprHttpHandler;
     }
 
-
     @Override
     public List<Component> provideMenuItems(ContextMenuEvent event) {
         HttpRequest request = null;
@@ -37,7 +36,7 @@ public class JprMenuTab implements ContextMenuItemsProvider {
             request = event.selectedRequestResponses().get(0).request();
         }
 
-        JMenuItem sendToJprMenuItem = new JMenuItem("Send to JPR");
+        JMenuItem sendToJprMenuItem = new JMenuItem("Send to JPR (Replacer");
         HttpRequest finalRequest = request;
         sendToJprMenuItem.addActionListener(
                 e -> {

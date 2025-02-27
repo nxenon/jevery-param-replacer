@@ -31,14 +31,18 @@ public class JeveryParamReplacer implements BurpExtension
     public List<String> payloads;
     public List<String> selectedParameters;
     public List<String> selectedHeaders;
-    private JprHttpHandler jprHttpHandler;
+    public JprHttpHandler jprHttpHandler;
+    public JprLoggerTab jprLoggerTab;
 
     @Override
     public void initialize(MontoyaApi montoyaApi) {
         montoyaApi.extension().setName("JeveryParamReplacer");
         this.logging = montoyaApi.logging();
+        jprLoggerTab = new JprLoggerTab(montoyaApi.http(), montoyaApi.userInterface());
 
         montoyaApi.userInterface().registerSuiteTab("JEvery Param Replacer Payloads", createUiPayloadPanel());
+        montoyaApi.userInterface().registerSuiteTab("JPR Request Logger", jprLoggerTab);
+
         jprHttpHandler = new JprHttpHandler(this, montoyaApi.http());
         montoyaApi.http().registerHttpHandler(jprHttpHandler);
         montoyaApi.userInterface().registerContextMenuItemsProvider(new JprMenuTab(this, montoyaApi.http(), jprHttpHandler));

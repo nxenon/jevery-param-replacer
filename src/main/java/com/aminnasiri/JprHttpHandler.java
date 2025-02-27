@@ -112,7 +112,6 @@ public class JprHttpHandler implements HttpHandler {
                             if (!checkParameterInScopeState(key, param.type())){
                                 continue;
                             }
-                            print_output(jsonObject.get(key).getAsString());
                             jsonObject.addProperty(key, p);
                             isAnyChangeMade = true;
                         }
@@ -133,6 +132,7 @@ public class JprHttpHandler implements HttpHandler {
             }
             if (isAnyChangeMade){
                 HttpRequestResponse httpRequestResponse = httpObject.sendRequest(modifiedRequest);
+                jeveryParamReplacerObject.jprLoggerTab.logRequestResponse(httpRequestResponse);
                 isAnyChangeMade = false;
             }
 
