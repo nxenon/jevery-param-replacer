@@ -1,10 +1,17 @@
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+
 plugins {
     id("java")
     id("com.github.johnrengelman.shadow") version "8.1.1" // Correct syntax for Kotlin DSL
 }
 
 group = "org.example"
-version = "0.6"
+version = "0.7"
 
 repositories {
     mavenCentral()
