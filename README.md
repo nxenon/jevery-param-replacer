@@ -21,5 +21,5 @@ Replace Every Parameter (URL / Body / JSON params) with desired payloads (from R
 - Java JDK 17
 
 
-     .\gradlew.bat shadowJar 
+        .\gradlew.bat shadowJar 
 
