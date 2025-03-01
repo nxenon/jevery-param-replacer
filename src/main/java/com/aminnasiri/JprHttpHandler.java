@@ -14,6 +14,8 @@ import burp.api.montoya.core.ToolType;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import burp.api.montoya.http.Http;
@@ -98,10 +100,10 @@ public class JprHttpHandler implements HttpHandler {
                     continue;
                 }
                 if (param.type() == HttpParameterType.URL){
-                    modifiedRequest = modifiedRequest.withParameter(urlParameter(param.name(), p));
+                    modifiedRequest = modifiedRequest.withParameter(urlParameter(param.name(), URLEncoder.encode(p, StandardCharsets.UTF_8)));
                     isAnyChangeMade = true;
                 } else if (param.type() == HttpParameterType.BODY){
-                    modifiedRequest = modifiedRequest.withParameter(bodyParameter(param.name(), p));
+                    modifiedRequest = modifiedRequest.withParameter(bodyParameter(param.name(), URLEncoder.encode(p, StandardCharsets.UTF_8)));
                     isAnyChangeMade = true;
                 } else if (param.type() == HttpParameterType.JSON){
                     String requestBody = modifiedRequest.body().toString();
