@@ -18,6 +18,8 @@ Replace Every Parameter (URL / Body / JSON params) with desired payloads (from R
 
 
 ## Build
+- Java JDK 17
+
 
      .\gradlew.bat shadowJar 
 
